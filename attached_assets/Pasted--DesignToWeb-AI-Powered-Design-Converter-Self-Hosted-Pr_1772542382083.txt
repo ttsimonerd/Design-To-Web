@@ -1,0 +1,496 @@
+# DesignToWeb — AI-Powered Design Converter (Self-Hosted)
+
+## 🎯 Project Overview
+
+Build a **self-hosted full-stack web application** called **DesignToWeb** that allows users to upload visual designs (from Canva, Figma, Adobe XD, or any image-based design tool) and uses AI to analyze them and automatically convert them into clean, production-ready HTML/CSS/JS web pages. The app runs entirely on the user's local machine (localhost) and includes a real-time preview, an AI chat assistant, and ZIP export functionality.
+
+---
+
+## 🛠️ Tech Stack
+
+- **Runtime:** Node.js with TypeScript (strict mode enabled)
+- **Framework:** Express.js (backend API + static file serving)
+- **Frontend:** Vanilla TypeScript + HTML5 + CSS3 (no heavy frontend framework needed)
+- **AI Integration:** Multi-provider abstraction layer (see AI Providers section)
+- **File Handling:** Multer (uploads), archiver (ZIP generation)
+- **Real-time:** WebSockets (`ws` library) for live preview updates
+- **Storage:** Local filesystem only (no cloud, no database needed)
+- **Styling:** Custom CSS with CSS variables — sleek dark theme, glassmorphism accents
+
+---
+
+## 📁 Project Structure
+
+```
+designtoweb/
+├── src/
+│   ├── server.ts
+│   ├── routes/
+│   │   ├── upload.ts
+│   │   ├── convert.ts
+│   │   ├── export.ts
+│   │   └── chat.ts
+│   ├── services/
+│   │   ├── aiService.ts          # Provider abstraction + factory
+│   │   ├── providers/
+│   │   │   ├── openaiProvider.ts
+│   │   │   ├── openrouterProvider.ts
+│   │   │   ├── anthropicProvider.ts
+│   │   │   ├── geminiProvider.ts
+│   │   │   ├── mistralProvider.ts
+│   │   │   ├── groqProvider.ts
+│   │   │   └── ollamaProvider.ts
+│   │   ├── fileService.ts
+│   │   └── zipService.ts
+│   ├── websocket/
+│   │   └── previewSocket.ts
+│   └── types/
+│       └── index.ts
+├── public/
+│   ├── index.html
+│   ├── styles/
+│   │   ├── main.css
+│   │   ├── sidebar.css
+│   │   ├── preview.css
+│   │   └── chat.css
+│   └── scripts/
+│       ├── app.ts
+│       ├── uploader.ts
+│       ├── preview.ts
+│       ├── chat.ts
+│       └── websocket.ts
+├── uploads/
+├── output/
+├── .env.example
+├── tsconfig.json
+├── package.json
+└── README.md
+```
+
+---
+
+## 🖥️ Application Layout (UI)
+
+The UI is a **3-panel layout** (similar to VS Code):
+
+```
+┌─────────────────────────────────────────────────────────┐
+│         DesignToWeb 🌐   [Provider Badge]   [⚙️]         │  ← Top Nav Bar
+├──────────────┬──────────────────────────┬───────────────┤
+│              │                          │               │
+│  LEFT PANEL  │     CENTER PANEL         │  RIGHT PANEL  │
+│  File Upload │   Live Preview (iframe)  │  AI Chat      │
+│  & History   │   of generated webpage   │  Assistant    │
+│              │                          │               │
+│  - Upload    │   [Rendered HTML output] │  [Messages]   │
+│    button    │                          │               │
+│  - Drag&drop │   Toolbar:               │  [Input box]  │
+│  - Past      │   - Desktop/Mobile view  │               │
+│    projects  │   - Refresh              │               │
+│              │   - Edit mode toggle     │               │
+│              │   - 📦 Export ZIP        │               │
+├──────────────┴──────────────────────────┴───────────────┤
+│  Status bar: "Converting design..." / "Ready" / errors   │
+└─────────────────────────────────────────────────────────┘
+```
+
+---
+
+## ✨ Design System (Sleek UI)
+
+### Colors & Theme
+
+```css
+:root {
+  --bg-primary: #0f0f13;
+  --bg-secondary: #1a1a24;
+  --bg-panel: #16161f;
+  --accent: #7c6af7;
+  --accent-hover: #9b8dff;
+  --text-primary: #f0f0f5;
+  --text-secondary: #8888aa;
+  --border: #2a2a3d;
+  --success: #4ade80;
+  --error: #f87171;
+  --warning: #fbbf24;
+  --glass: rgba(255,255,255,0.03);
+  --radius: 12px;
+  --shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+```
+
+### Design Rules
+
+- Glassmorphism cards for panels
+- Smooth transitions (0.2s ease) on all hover states
+- Custom scrollbars (thin, styled)
+- Skeleton loaders while AI is processing
+- Animated gradient border on the active panel
+- Monospace font for code areas, Inter/system-ui for UI text
+- Toast notifications for success/error/warning states (bottom-right)
+- Subtle entrance animations on page load (fade + translate)
+
+---
+
+## 🤖 AI Providers — Multi-Platform Support
+
+The app must support multiple AI providers, selectable by the user via the Settings modal.
+All providers are configured through `.env` and the UI. The `aiService.ts` must implement
+an **abstraction layer (strategy pattern)** so switching providers requires zero code changes.
+
+### Supported Providers
+
+| Provider       | Models Available                                            | Vision Support   |
+|----------------|-------------------------------------------------------------|------------------|
+| OpenAI         | gpt-4o, gpt-4-turbo, gpt-4-vision-preview                  | ✅ Yes           |
+| OpenRouter     | Any model available at openrouter.ai (user defines)         | ✅ If supported  |
+| Anthropic      | claude-3-5-sonnet, claude-3-opus, claude-3-haiku            | ✅ Yes           |
+| Google Gemini  | gemini-1.5-pro, gemini-1.5-flash, gemini-pro-vision         | ✅ Yes           |
+| Mistral        | mistral-large, pixtral-12b (vision)                         | ⚠️ Pixtral only |
+| Groq           | llama-3.2-11b-vision, llama-3.2-90b-vision                  | ✅ Yes           |
+| Ollama (Local) | llava, llava-llama3, bakllava (user-defined)                 | ✅ Yes (local)   |
+
+### `src/services/aiService.ts` — Architecture
+
+Implement an **AIProvider interface**:
+
+```typescript
+interface AIProvider {
+  name: string;
+  analyzeDesign(imageBase64: string, mimeType: string): Promise<ConversionResult>;
+  chat(messages: ChatMessage[], currentFiles: ProjectFiles): Promise<ChatResult>;
+}
+```
+
+Create one class per provider implementing this interface:
+- `OpenAIProvider`
+- `OpenRouterProvider`
+- `AnthropicProvider`
+- `GeminiProvider`
+- `MistralProvider`
+- `GroqProvider`
+- `OllamaProvider`
+
+A factory function `getAIProvider(config: AppConfig): AIProvider` reads the
+selected provider from config and returns the correct instance.
+
+### OpenRouter — Special Implementation Notes
+
+OpenRouter uses the OpenAI-compatible API format but requires specific headers:
+
+```typescript
+headers: {
+  "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+  "HTTP-Referer": process.env.OPENROUTER_SITE_URL,
+  "X-Title": process.env.OPENROUTER_SITE_NAME,
+  "Content-Type": "application/json"
+}
+// Base URL: https://openrouter.ai/api/v1
+```
+
+The model slug must be passed exactly as listed on openrouter.ai
+(e.g. `google/gemini-pro-vision`, `meta-llama/llama-3.2-11b-vision-instruct`,
+`anthropic/claude-3.5-sonnet`).
+
+### Ollama — Special Implementation Notes
+
+Ollama runs 100% locally (no API key needed):
+
+```typescript
+// Check available models
+GET http://localhost:11434/api/tags
+
+// Vision request
+POST http://localhost:11434/api/generate
+{
+  "model": "llava",
+  "prompt": "...",
+  "images": ["<base64_image>"],
+  "stream": false
+}
+```
+
+Show a helper message in the UI if Ollama is selected:
+> "Make sure Ollama is running locally with a vision model installed.
+> Run: `ollama pull llava` to get started."
+
+---
+
+## ⚙️ Configuration
+
+### `.env` file (auto-created from `.env.example` on first run)
+
+```
+# === AI Provider Selection ===
+AI_PROVIDER=openai   # openai | openrouter | anthropic | gemini | mistral | groq | ollama
+
+# === OpenAI ===
+OPENAI_API_KEY=
+OPENAI_MODEL=gpt-4o
+
+# === OpenRouter ===
+OPENROUTER_API_KEY=
+OPENROUTER_MODEL=anthropic/claude-3.5-sonnet
+OPENROUTER_SITE_URL=http://localhost:3000
+OPENROUTER_SITE_NAME=DesignToWeb
+
+# === Anthropic ===
+ANTHROPIC_API_KEY=
+ANTHROPIC_MODEL=claude-3-5-sonnet-20241022
+
+# === Google Gemini ===
+GEMINI_API_KEY=
+GEMINI_MODEL=gemini-1.5-pro
+
+# === Mistral ===
+MISTRAL_API_KEY=
+MISTRAL_MODEL=pixtral-12b-2409
+
+# === Groq ===
+GROQ_API_KEY=
+GROQ_MODEL=llama-3.2-90b-vision-preview
+
+# === Ollama (Local — no API key needed) ===
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=llava
+
+# === General ===
+PORT=3000
+MAX_FILE_SIZE_MB=20
+```
+
+### Settings Modal
+
+The Settings modal (gear icon in top nav) must include:
+
+**AI Provider Section:**
+- Provider dropdown: select from all supported providers
+- Dynamic fields per provider:
+  - API Key input (masked, with Show/Hide toggle)
+  - Model selector (dropdown with presets + free-text for custom models)
+  - OpenRouter: extra field for custom model slug + link to openrouter.ai/models
+  - Ollama: Base URL field + "Test connection" button that pings `/api/tags`
+- **"Test Connection" button** for every provider:
+  - Sends a minimal test request
+  - Shows ✅ green toast if OK, ❌ red toast with error if not
+- **Provider status badge** in the top nav showing the active provider name
+  and a colored dot (🟢 connected / 🟡 not tested / 🔴 error)
+
+**General Section:**
+- Toggle: Dark mode / Light mode
+- Button: "Open output folder" (uses `child_process.exec` to open in Finder/Explorer)
+- Button: "Clear all projects" (wipes `/uploads/` and `/output/`)
+
+---
+
+## 🔧 Core Features — Detailed Implementation
+
+### 1. 📤 Design Upload (Left Panel)
+
+**Frontend behavior:**
+- Large drag-and-drop zone with animated dashed border on hover
+- Click to browse files
+- Accepted formats: `.png`, `.jpg`, `.jpeg`, `.webp`, `.pdf` (first page), `.svg`
+- Show a thumbnail preview of the uploaded file immediately
+- Display file name, size, and upload timestamp
+- Keep a **project history** list below the upload zone (stored in `localStorage`)
+  - Each project shows: thumbnail, date, "Open" and "Delete" buttons
+
+**Backend (`/api/upload` POST):**
+- Use Multer to receive the file
+- Save it to `/uploads/{uuid}/original.{ext}`
+- Return the UUID and file metadata
+- Validate file type and size (max defined in `.env`)
+
+---
+
+### 2. 🤖 AI Conversion Engine (`/api/convert` POST)
+
+**Flow:**
+1. Receive the UUID of an uploaded design
+2. Read the image file from `/uploads/{uuid}/`
+3. Convert image to base64
+4. Send to the **active AI provider** via the abstraction layer with this structured prompt:
+
+```
+You are an expert frontend developer. Analyze this design image and convert it
+to a complete, responsive webpage.
+
+Return ONLY valid JSON in this exact format:
+{
+  "html": "<complete HTML string>",
+  "css": "<complete CSS string>",
+  "js": "<complete JavaScript string or empty string>",
+  "description": "<brief description of what was detected in the design>",
+  "components": ["list", "of", "detected", "components"]
+}
+
+Rules for the generated code:
+- HTML must be complete (<!DOCTYPE html> ... </html>)
+- CSS must be modern, responsive (mobile-first), use flexbox/grid
+- Match colors, fonts, spacing as closely as possible to the design
+- Use semantic HTML5 elements
+- Include smooth hover effects
+- The page must work standalone (no external dependencies unless CDN links included inline)
+- JavaScript only if interactive elements are detected (sliders, modals, tabs, etc.)
+```
+
+5. Parse the JSON response
+6. Save `index.html`, `styles.css`, `script.js` to `/output/{uuid}/`
+7. Return the paths + description + component list
+
+**Via WebSocket — emit progress events:**
+```json
+{ "event": "status", "message": "Uploading to AI..." }
+{ "event": "status", "message": "Analyzing design..." }
+{ "event": "status", "message": "Generating HTML..." }
+{ "event": "preview_ready", "uuid": "..." }
+```
+
+---
+
+### 3. 👁️ Live Preview (Center Panel)
+
+- An `<iframe>` that loads `/preview/{uuid}` — a route that serves the generated `index.html`
+- **Toolbar buttons:**
+  - 🖥️ Desktop view (100% width)
+  - 📱 Mobile view (375px width, centered)
+  - 🔄 Refresh
+  - ✏️ Edit toggle (injects `contenteditable` into the iframe)
+  - 📦 Export ZIP (floating action button, visible only when preview is ready)
+- When WebSocket sends `preview_ready`, the iframe `src` is automatically updated
+- Show a pulsing skeleton loader while AI is working
+- Animated gradient border while loading
+
+---
+
+### 4. 💬 AI Chat Assistant (Right Panel)
+
+**Purpose:** Allow users to refine the generated webpage via natural language.
+
+**Features:**
+- Persistent chat history per project (stored in memory per session)
+- Each message shows: avatar icon, timestamp, message bubble
+- User messages: right-aligned, accent color
+- AI messages: left-aligned, dark bubble with subtle border
+- Typing indicator animation (3 bouncing dots)
+- Code blocks in AI responses are syntax-highlighted (highlight.js from CDN)
+
+**Backend (`/api/chat` POST):**
+- Accepts: `{ uuid, message, history[] }`
+- Builds a system prompt:
+
+```
+You are a helpful web developer assistant. The user has converted a design to HTML/CSS/JS.
+Current files content: [inject current HTML + CSS + JS]
+Help the user modify, improve, or understand their webpage.
+If the user asks for changes, return the updated files in JSON:
+{ "html": "...", "css": "...", "js": "..." }
+If it's just a question, return: { "answer": "..." }
+```
+
+- If response contains updated files → overwrite `/output/{uuid}/` and emit `preview_ready` via WebSocket
+- If it's just an answer → stream the text response back
+
+**Example chat interactions the AI should handle:**
+- "Change the background color to dark blue"
+- "Make the navbar sticky"
+- "Add a contact form"
+- "Why did you use flexbox here?"
+- "Make it fully mobile responsive"
+
+---
+
+### 5. 📦 ZIP Export (`/api/export/:uuid` GET)
+
+- Bundle `/output/{uuid}/index.html`, `styles.css`, `script.js` into a ZIP
+- Include a `README.txt` with:
+  - Generation date
+  - Original design filename
+  - AI provider and model used
+  - List of detected components
+- Trigger browser download: `designtoweb-{uuid-short}-{date}.zip`
+- Show success toast: "✅ ZIP downloaded successfully!"
+
+---
+
+### 6. ⚠️ Error Handling & Fallbacks
+
+- If the selected provider fails (rate limit, wrong key, timeout):
+  - Show a clear error toast with provider name and error message
+  - Offer a "Switch Provider" quick-action button in the toast
+- If a provider does not support vision (text-only model selected):
+  - Show warning before conversion: "⚠️ The selected model may not support image analysis. Consider switching to a vision-capable model."
+- All provider API calls must have a **30-second timeout**
+- Graceful fallback if no API key is set: show a modal asking for the key instead of crashing
+- Error handling on every async operation with user-friendly messages
+
+---
+
+## 🚀 Server Setup & Self-Hosting
+
+**`src/server.ts`:**
+- Express app listening on `process.env.PORT || 3000`
+- Serve `/public` as static files
+- Serve `/output/{uuid}/` as static at `/preview/{uuid}`
+- WebSocket server attached to the same HTTP server
+- On startup, print to console:
+
+```
+╔══════════════════════════════════╗
+║   DesignToWeb is running! 🚀     ║
+║   Open: http://localhost:3000    ║
+╚══════════════════════════════════╝
+```
+
+- Auto-open the browser on startup using the `open` npm package
+
+---
+
+## 📦 package.json Scripts
+
+```json
+{
+  "scripts": {
+    "dev": "ts-node-dev --respawn src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "clean": "rm -rf dist uploads/* output/*"
+  }
+}
+```
+
+---
+
+## ✅ Step-by-Step Build Order
+
+1. Initialize project: `npm init`, install all dependencies, configure `tsconfig.json`
+2. Build Express server with static serving and basic health check route
+3. Implement file upload route with Multer
+4. Implement the `AIProvider` interface and all 7 provider classes in `src/services/providers/`
+5. Implement the `getAIProvider` factory function in `aiService.ts`
+6. Implement `/api/convert` route with file saving and provider abstraction
+7. Set up WebSocket server and progress events
+8. Build the 3-panel HTML layout with CSS and design system
+9. Implement drag & drop uploader in frontend TypeScript
+10. Implement iframe preview with toolbar (desktop/mobile/edit/refresh/export)
+11. Implement AI chat UI and `/api/chat` backend
+12. Implement ZIP export with archiver
+13. Build Settings modal with dynamic AI provider fields and Test Connection button
+14. Add provider status badge to top nav bar
+15. Add project history with `localStorage`
+16. Polish: animations, skeleton loaders, toasts, responsive layout
+17. Test full flow end-to-end with at least 2 different providers
+18. Write README.md with setup instructions for each provider
+
+---
+
+## ⚠️ Important Constraints
+
+- **No cloud storage** — everything stays on `localhost`
+- **No user authentication** — single-user local tool
+- **No database** — filesystem only
+- **All TypeScript** — no plain `.js` files in `src/`
+- **Provider abstraction is mandatory** — no provider-specific code outside of `src/services/providers/`
+- **Error handling** on every async operation with user-friendly messages
+- **Graceful fallback** if no API key is configured: prompt the user via modal
