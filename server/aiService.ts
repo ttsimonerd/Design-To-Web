@@ -34,7 +34,7 @@ Rules for the generated code:
   let endpoint = "";
   let payload: any = {};
 
-  if (opts.provider === "openai" || opts.provider === "openrouter" || opts.provider === "groq") {
+  if (opts.provider === "openai" || opts.provider === "openrouter" || opts.provider === "groq" || opts.provider === "grok" || opts.provider === "nvidia") {
     if (opts.provider === "openai") {
       endpoint = "https://api.openai.com/v1/chat/completions";
       headers["Authorization"] = `Bearer ${opts.apiKey}`;
@@ -45,6 +45,12 @@ Rules for the generated code:
       headers["X-Title"] = "DesignToWeb";
     } else if (opts.provider === "groq") {
       endpoint = "https://api.groq.com/openai/v1/chat/completions";
+      headers["Authorization"] = `Bearer ${opts.apiKey}`;
+    } else if (opts.provider === "grok") {
+      endpoint = "https://api.x.ai/v1/chat/completions";
+      headers["Authorization"] = `Bearer ${opts.apiKey}`;
+    } else if (opts.provider === "nvidia") {
+      endpoint = "https://integrate.api.nvidia.com/v1/chat/completions";
       headers["Authorization"] = `Bearer ${opts.apiKey}`;
     }
 
@@ -128,6 +134,7 @@ Rules for the generated code:
   } else if (opts.provider === "anthropic") {
     jsonString = data.content[0].text;
   } else {
+    // OpenAI-compatible providers (OpenAI, OpenRouter, Groq, Grok, Nvidia)
     jsonString = data.choices[0].message.content;
   }
 

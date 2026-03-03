@@ -65,6 +65,10 @@ export function SettingsModal({ isOpen, onClose }: { isOpen: boolean; onClose: (
                     >
                       <option value="anthropic">Anthropic (Claude)</option>
                       <option value="openai">OpenAI</option>
+                      <option value="openrouter">OpenRouter</option>
+                      <option value="grok">xAI Grok</option>
+                      <option value="nvidia">Nvidia NIM</option>
+                      <option value="groq">Groq</option>
                       <option value="custom">Custom / Local API</option>
                     </select>
                   </div>
