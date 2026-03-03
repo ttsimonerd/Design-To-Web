@@ -141,6 +141,11 @@ export async function registerRoutes(
       await fs.mkdir(projectOutDir, { recursive: true });
       
       let finalHtml = result.html;
+      // Ensure we have a basic HTML structure if AI only returned a snippet
+      if (!finalHtml.toLowerCase().includes('<html')) {
+        finalHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Generated Design</title></head><body>${finalHtml}</body></html>`;
+      }
+
       if (!finalHtml.includes('styles.css') && result.css) {
          finalHtml = finalHtml.replace('</head>', `<link rel="stylesheet" href="./styles.css"></head>`);
       }

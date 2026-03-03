@@ -65,6 +65,31 @@ Rules for the generated code:
         }
       ]
     };
+  } else if (opts.provider === "anthropic") {
+    endpoint = "https://api.anthropic.com/v1/messages";
+    headers["x-api-key"] = opts.apiKey || "";
+    headers["anthropic-version"] = "2023-06-01";
+    payload = {
+      model: opts.model || "claude-3-5-sonnet-20241022",
+      max_tokens: 4096,
+      system: systemPrompt,
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "image",
+              source: {
+                type: "base64",
+                media_type: opts.mimeType,
+                data: opts.imageBase64
+              }
+            },
+            { type: "text", text: "Convert this design to HTML/CSS/JS. Return JSON only." }
+          ]
+        }
+      ]
+    };
   } else if (opts.provider === "ollama") {
     endpoint = `${opts.baseUrl || "http://localhost:11434"}/api/chat`;
     payload = {
@@ -100,6 +125,8 @@ Rules for the generated code:
   let jsonString = "";
   if (opts.provider === "ollama") {
     jsonString = data.message.content;
+  } else if (opts.provider === "anthropic") {
+    jsonString = data.content[0].text;
   } else {
     jsonString = data.choices[0].message.content;
   }
@@ -119,6 +146,20 @@ Rules for the generated code:
       components: parsed.components || []
     };
   } catch (e) {
+    // Fallback: try to find anything that looks like JSON if the model was talkative
+    const jsonMatch = jsonString.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      try {
+        const parsed = JSON.parse(jsonMatch[0]);
+        return {
+          html: parsed.html || "",
+          css: parsed.css || "",
+          js: parsed.js || "",
+          description: parsed.description || "",
+          components: parsed.components || []
+        };
+      } catch (innerE) {}
+    }
     console.error("Failed to parse JSON:", jsonString);
     throw new Error("AI did not return valid JSON.");
   }
