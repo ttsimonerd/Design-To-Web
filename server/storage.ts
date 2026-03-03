@@ -1,38 +1,44 @@
-import { type User, type InsertUser } from "@shared/schema";
-import { randomUUID } from "crypto";
-
-// modify the interface with any CRUD methods
-// you might need
+import { Project, InsertProject } from "@shared/schema";
 
 export interface IStorage {
-  getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  getProjects(): Promise<Project[]>;
+  getProject(id: string): Promise<Project | undefined>;
+  createProject(project: Project): Promise<Project>;
+  updateProject(id: string, project: Partial<Project>): Promise<Project>;
+  deleteProject(id: string): Promise<void>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<string, User>;
+export class FileStorage implements IStorage {
+  private projects: Map<string, Project>;
 
   constructor() {
-    this.users = new Map();
+    this.projects = new Map();
   }
 
-  async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+  async getProjects(): Promise<Project[]> {
+    return Array.from(this.projects.values()).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+  async getProject(id: string): Promise<Project | undefined> {
+    return this.projects.get(id);
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
-    return user;
+  async createProject(project: Project): Promise<Project> {
+    this.projects.set(project.id, project);
+    return project;
+  }
+
+  async updateProject(id: string, update: Partial<Project>): Promise<Project> {
+    const existing = this.projects.get(id);
+    if (!existing) throw new Error("Project not found");
+    const updated = { ...existing, ...update };
+    this.projects.set(id, updated);
+    return updated;
+  }
+
+  async deleteProject(id: string): Promise<void> {
+    this.projects.delete(id);
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new FileStorage();
