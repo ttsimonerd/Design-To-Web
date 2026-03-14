@@ -2,20 +2,36 @@
 
 A full-stack web application built with Express, React, and PostgreSQL.
 
-## One-Command Install
+## Requirements
 
+Before you start, make sure you have:
+
+- **Node.js v18 or later** — [nodejs.org](https://nodejs.org)
+- **Git** — [git-scm.com](https://git-scm.com)
+- **A PostgreSQL database**
+
+---
+
+## Quick Start (Recommended)
+
+### 1. Clone the repository
+```bash
+git clone https://github.com/your-username/your-repo-name.git
+cd your-repo-name
+```
+
+### 2. Run the installer
 ```bash
 bash install.sh
 ```
 
-That's it. The installer will:
+The installer will:
 - Check your Node.js version
 - Install all dependencies
-- Create your `.env` file
-- Set up the database
+- Ask for your database URL and create the `.env` file
+- Set up the database automatically
 
-Then start the app with:
-
+### 3. Start the app
 ```bash
 npm run dev
 ```
@@ -26,35 +42,34 @@ Open [http://localhost:5000](http://localhost:5000) in your browser.
 
 ## Manual Installation
 
-If you prefer to install step by step:
+If you prefer to do it step by step:
 
-### 1. Install dependencies
+### 1. Clone the repository
+```bash
+git clone https://github.com/your-username/your-repo-name.git
+cd your-repo-name
+```
+
+### 2. Install dependencies
 ```bash
 npm install
 ```
 
-### 2. Set up environment
+### 3. Set up environment
 Create a `.env` file in the project root:
 ```
 DATABASE_URL=postgresql://user:password@localhost:5432/your_database
 ```
 
-### 3. Set up the database
+### 4. Set up the database
 ```bash
 npm run db:push
 ```
 
-### 4. Start the app
+### 5. Start the app
 ```bash
 npm run dev
 ```
-
----
-
-## Requirements
-
-- Node.js v18 or later — [nodejs.org](https://nodejs.org)
-- A PostgreSQL database
 
 ---
 
