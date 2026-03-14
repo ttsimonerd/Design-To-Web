@@ -1,64 +1,79 @@
-# Rest Express Application
+# Rest Express
 
-A modern full-stack application built with Express, React, and Drizzle ORM.
+A full-stack web application built with Express, React, and PostgreSQL.
 
-## Features
+## One-Command Install
 
-- **Frontend**: React with Vite, Tailwind CSS, and Radix UI components.
-- **Backend**: Express.js server.
-- **Database**: PostgreSQL with Drizzle ORM.
-- **Authentication**: Passport.js for local authentication.
-- **AI Integration**: Built-in AI service capabilities.
-
-## Prerequisites
-
-- Node.js (v18 or later)
-- PostgreSQL database
-
-## Easy Installation
-
-### 1. Clone and Install
 ```bash
-git clone <your-repo-url>
-cd <project-directory>
+bash install.sh
+```
+
+That's it. The installer will:
+- Check your Node.js version
+- Install all dependencies
+- Create your `.env` file
+- Set up the database
+
+Then start the app with:
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:5000](http://localhost:5000) in your browser.
+
+---
+
+## Manual Installation
+
+If you prefer to install step by step:
+
+### 1. Install dependencies
+```bash
 npm install
 ```
 
-### 2. Configure Environment
-Create a `.env` file or set the following environment variables:
-- `DATABASE_URL`: Your PostgreSQL connection string.
+### 2. Set up environment
+Create a `.env` file in the project root:
+```
+DATABASE_URL=postgresql://user:password@localhost:5432/your_database
+```
 
-### 3. Initialize Database
+### 3. Set up the database
 ```bash
 npm run db:push
 ```
 
-### 4. Run Application
+### 4. Start the app
 ```bash
-# For development
 npm run dev
-
-# For production
-npm run build
-npm run start
 ```
 
-The application will be available at `http://localhost:5000`.
+---
+
+## Requirements
+
+- Node.js v18 or later — [nodejs.org](https://nodejs.org)
+- A PostgreSQL database
+
+---
 
 ## Scripts
 
-- `npm run dev`: Starts the development server with hot reload.
-- `npm run build`: Builds the application for production.
-- `npm run start`: Starts the production server.
-- `npm run check`: Runs TypeScript type checking.
-- `npm run db:push`: Syncs the Drizzle schema with the database.
+| Command | Description |
+|---|---|
+| `npm run dev` | Start development server |
+| `npm run build` | Build for production |
+| `npm run start` | Start production server |
+| `npm run db:push` | Sync database schema |
+
+---
 
 ## Tech Stack
 
-- **Framework**: Express.js
-- **Frontend**: React, Vite
-- **Styling**: Tailwind CSS, Shadcn UI
-- **ORM**: Drizzle ORM
-- **Database**: PostgreSQL
-- **State Management**: TanStack Query (React Query)
-- **Forms**: React Hook Form, Zod
+- **Backend**: Express.js
+- **Frontend**: React + Vite
+- **Styling**: Tailwind CSS + Shadcn UI
+- **Database**: PostgreSQL + Drizzle ORM
+- **State**: TanStack Query
+- **Forms**: React Hook Form + Zod
