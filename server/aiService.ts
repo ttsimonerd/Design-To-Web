@@ -122,8 +122,24 @@ Rules for the generated code:
   });
 
   if (!response.ok) {
-    const errText = await response.text();
-    throw new Error(`AI Provider Error: ${response.status} ${errText}`);
+    const errBody = await response.json().catch(() => null);
+    const errMessage = errBody?.error?.message || "";
+
+    if (response.status === 401 || errBody?.error?.type === "authentication_error") {
+      throw new Error("Invalid or missing API key. Please check your provider settings.");
+    }
+    if (errMessage.includes("credit balance") || errMessage.includes("quota") || errMessage.includes("billing")) {
+      throw new Error("Your AI provider account has insufficient credits. Please add credits to your account and try again.");
+    }
+    if (response.status === 429) {
+      throw new Error("Too many requests. Please wait a moment and try again.");
+    }
+    if (response.status === 400 && errMessage.includes("image")) {
+      throw new Error("This image format is not supported by the selected AI provider. Please use PNG, JPG, or WebP.");
+    }
+
+    const fallback = errMessage || `Request failed with status ${response.status}`;
+    throw new Error(fallback);
   }
 
   const data = await response.json();

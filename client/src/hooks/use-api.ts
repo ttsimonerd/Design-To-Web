@@ -70,7 +70,10 @@ export function useUpload() {
         body: formData, // Browser sets multipart/form-data with boundary
       });
       
-      if (!res.ok) throw new Error("Upload failed");
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.message || "Upload failed");
+      }
       return api.upload.create.responses[201].parse(await res.json());
     },
     onError: (err: any) => {
@@ -100,7 +103,10 @@ export function useConvert() {
         body: JSON.stringify(payload),
       });
       
-      if (!res.ok) throw new Error("Conversion failed");
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.message || "Conversion failed");
+      }
       return api.convert.create.responses[200].parse(await res.json());
     },
     onSuccess: (_, id) => {

@@ -88,7 +88,16 @@ export async function registerRoutes(
     }
 
     const id = uuidv4();
-    const ext = path.extname(req.file.originalname);
+    const ext = path.extname(req.file.originalname).toLowerCase();
+    const SUPPORTED_FORMATS = [".png", ".jpg", ".jpeg", ".gif", ".webp"];
+
+    if (!SUPPORTED_FORMATS.includes(ext)) {
+      await fs.unlink(req.file.path).catch(() => {});
+      return res.status(400).json({
+        message: `Unsupported file format "${ext}". Please upload a PNG, JPG, GIF, or WebP image.`
+      });
+    }
+
     const newPath = path.join(UPLOADS_DIR, `${id}${ext}`);
     
     await fs.rename(req.file.path, newPath);
@@ -119,9 +128,18 @@ export async function registerRoutes(
       broadcastStatus("Uploading to AI...");
       
       const imagePath = path.join(UPLOADS_DIR, path.basename(project.originalImageUrl));
+      const ext = path.extname(imagePath).slice(1).toLowerCase();
+      const SUPPORTED_FORMATS = ["png", "jpg", "jpeg", "gif", "webp"];
+
+      if (!SUPPORTED_FORMATS.includes(ext)) {
+        return res.status(400).json({
+          message: `Unsupported file format ".${ext}". Please upload a PNG, JPG, GIF, or WebP image.`
+        });
+      }
+
       const imageBuffer = await fs.readFile(imagePath);
       const base64Image = imageBuffer.toString("base64");
-      const mimeType = `image/${path.extname(imagePath).slice(1)}` || "image/png";
+      const mimeType = ext === "jpg" ? "image/jpeg" : `image/${ext}`;
 
       broadcastStatus("Analyzing design...");
 
