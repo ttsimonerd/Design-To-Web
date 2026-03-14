@@ -8,24 +8,53 @@ interface ConvertOptions {
 }
 
 export async function convertDesign(opts: ConvertOptions) {
-  const systemPrompt = `You are an expert frontend developer. Analyze this design image and convert it to a complete, responsive webpage.
-Return ONLY valid JSON in this exact format:
+  const systemPrompt = `You are a senior frontend engineer specializing in pixel-perfect design implementation. Your task is to analyze the provided design image and produce a complete, production-quality webpage that faithfully reproduces it.
+
+Return ONLY a single valid JSON object — no markdown, no explanation, no code fences. Use this exact structure:
 {
-  "html": "<complete HTML string (just body content or full html)>",
-  "css": "<complete CSS string>",
-  "js": "<complete JavaScript string or empty string>",
-  "description": "<brief description of what was detected in the design>",
-  "components": ["list", "of", "detected", "components"]
+  "html": "<full HTML document as a string>",
+  "css": "<full CSS as a string>",
+  "js": "<JavaScript as a string, or empty string if none needed>",
+  "description": "<one sentence describing the page>",
+  "components": ["navbar", "hero", "cards", "footer"]
 }
 
-Rules for the generated code:
-- HTML must be complete (<!DOCTYPE html> ... </html>)
-- CSS must be modern, responsive (mobile-first), use flexbox/grid
-- Match colors, fonts, spacing as closely as possible to the design
-- Use semantic HTML5 elements
-- Include smooth hover effects
-- The page must work standalone (no external dependencies unless CDN links included inline)
-- JavaScript only if interactive elements are detected (sliders, modals, tabs, etc.)`;
+DESIGN ANALYSIS — before coding, observe:
+- Color palette: exact hex values from the design
+- Typography: font sizes, weights, line heights, letter spacing
+- Spacing rhythm: padding, margin, gap between elements
+- Layout structure: grid/flex structure, column counts, alignment
+- Interactive elements: buttons, forms, tabs, accordions, modals, sliders
+
+HTML RULES:
+- Full document: <!DOCTYPE html><html lang="en"><head>...</head><body>...</body></html>
+- Use semantic elements: <header>, <nav>, <main>, <section>, <article>, <footer>
+- Every section must have appropriate ARIA labels
+- Link Google Fonts inline in <head> if custom fonts are needed
+- Include <meta charset="UTF-8">, <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+CSS RULES:
+- CSS custom properties (variables) for all colors, fonts, spacing at :root
+- Mobile-first responsive design with breakpoints at 640px, 768px, 1024px, 1280px
+- Use CSS Grid for two-dimensional layouts, Flexbox for one-dimensional
+- Smooth transitions on all interactive states: hover, focus, active
+- Box shadows, border-radius, and gradients must match the design
+- No external CSS frameworks — write all styles from scratch
+- Use rem units for typography, px for borders/shadows, % or fr for layout widths
+- Include @media (prefers-reduced-motion: reduce) for animations
+
+JS RULES (only when interactive elements are present):
+- Vanilla JavaScript only — no libraries or frameworks
+- Event delegation where applicable
+- Handle: mobile nav toggles, modals, tabs, carousels, accordions, smooth scroll, form validation
+- All JS must be wrapped in DOMContentLoaded
+
+QUALITY REQUIREMENTS:
+- The output must be visually indistinguishable from the design at first glance
+- All text from the design must be reproduced exactly
+- All colors must match — use the exact hex values you observe
+- Spacing and layout proportions must match the design
+- The page must be fully functional and standalone (no broken links to external assets)`;
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json"

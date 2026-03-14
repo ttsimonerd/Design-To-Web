@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { useDropzone } from "react-dropzone";
-import { UploadCloud, FileImage, Loader2 } from "lucide-react";
-import { motion } from "framer-motion";
+import { UploadCloud, ImagePlus, Loader2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { clsx } from "clsx";
 
 interface FileUploadProps {
@@ -10,70 +10,79 @@ interface FileUploadProps {
 }
 
 export function FileUpload({ onUpload, isUploading }: FileUploadProps) {
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    if (acceptedFiles.length > 0) {
-      onUpload(acceptedFiles[0]);
-    }
-  }, [onUpload]);
+  const onDrop = useCallback(
+    (acceptedFiles: File[]) => {
+      if (acceptedFiles.length > 0) onUpload(acceptedFiles[0]);
+    },
+    [onUpload]
+  );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: {
-      'image/*': ['.png', '.jpg', '.jpeg', '.webp']
-    },
+    accept: { "image/*": [".png", ".jpg", ".jpeg", ".webp", ".gif"] },
     maxFiles: 1,
-    disabled: isUploading
+    disabled: isUploading,
   });
 
   return (
     <div
       {...getRootProps()}
+      data-testid="dropzone-upload"
       className={clsx(
-        "relative group cursor-pointer overflow-hidden rounded-2xl border-2 border-dashed transition-all duration-500",
-        isDragActive ? "border-primary bg-primary/5" : "border-white/10 hover:border-white/20 glass hover:bg-white/[0.05]",
-        isUploading && "pointer-events-none opacity-70"
+        "relative cursor-pointer rounded-xl border-2 border-dashed transition-all duration-300 overflow-hidden",
+        isDragActive
+          ? "border-primary/70 bg-primary/5 shadow-lg shadow-primary/10"
+          : "border-white/10 hover:border-white/20 glass hover:bg-white/[0.03]",
+        isUploading && "pointer-events-none opacity-60"
       )}
     >
-      <input {...getInputProps()} />
-      
-      {/* Animated gradient border effect on hover/drag */}
-      <div className={clsx(
-        "absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/20 to-accent/0 translate-x-[-100%] transition-transform duration-1000",
-        isDragActive && "translate-x-[100%] animate-pulse-slow"
-      )} />
+      <input {...getInputProps()} data-testid="input-file" />
 
-      <div className="relative p-8 flex flex-col items-center justify-center text-center z-10 min-h-[200px]">
-        {isUploading ? (
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="flex flex-col items-center gap-4 text-primary"
-          >
-            <Loader2 className="w-10 h-10 animate-spin" />
-            <p className="font-medium text-white">Uploading & Analyzing...</p>
-          </motion.div>
-        ) : (
-          <motion.div
-            animate={{ scale: isDragActive ? 1.05 : 1 }}
-            className="flex flex-col items-center gap-4"
-          >
-            <div className={clsx(
-              "w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg transition-colors duration-300",
-              isDragActive ? "bg-primary text-white shadow-primary/25" : "bg-white/5 text-white/50 group-hover:text-primary group-hover:bg-primary/10"
-            )}>
-              {isDragActive ? <FileImage className="w-8 h-8" /> : <UploadCloud className="w-8 h-8" />}
-            </div>
-            
-            <div>
-              <p className="text-lg font-medium text-white mb-1">
-                {isDragActive ? "Drop design here!" : "Upload Design"}
-              </p>
-              <p className="text-sm text-white/40">
-                Drag & drop or click to select image
-              </p>
-            </div>
-          </motion.div>
-        )}
+      <div className="flex flex-col items-center justify-center gap-3 px-4 py-8 text-center">
+        <AnimatePresence mode="wait">
+          {isUploading ? (
+            <motion.div
+              key="uploading"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              className="flex flex-col items-center gap-3"
+            >
+              <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
+                <Loader2 className="w-6 h-6 text-primary animate-spin" />
+              </div>
+              <p className="text-sm text-white/60 font-medium">Uploading & converting…</p>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="idle"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex flex-col items-center gap-3"
+            >
+              <div className={clsx(
+                "w-12 h-12 rounded-xl flex items-center justify-center transition-colors duration-300",
+                isDragActive ? "bg-primary/30 text-primary" : "bg-white/[0.05] text-white/30"
+              )}>
+                {isDragActive ? (
+                  <UploadCloud className="w-6 h-6" />
+                ) : (
+                  <ImagePlus className="w-6 h-6" />
+                )}
+              </div>
+
+              <div>
+                <p className="text-sm font-semibold text-white/70">
+                  {isDragActive ? "Drop to convert" : "Upload a design"}
+                </p>
+                <p className="text-xs text-white/30 mt-1">
+                  PNG, JPG, WebP, GIF — drag & drop or click
+                </p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

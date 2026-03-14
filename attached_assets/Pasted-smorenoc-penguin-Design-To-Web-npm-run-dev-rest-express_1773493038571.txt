@@ -1,0 +1,33 @@
+smorenoc@penguin:~/Design-To-Web$ npm run dev
+
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+1:53:44 PM [express] serving on port 5000
+
+warn - The class `ease-[cubic-bezier(0.4,0,0.2,1)]` is ambiguous and matches multiple utilities.
+warn - If this is content and not a class, replace it with `ease-&lsqb;cubic-bezier(0.4,0,0.2,1)&rsqb;` to silence this warning.
+1:53:58 PM [express] GET /api/projects 304 in 3ms :: []
+1:54:24 PM [express] POST /api/upload 400 in 29ms :: {"message":"Unsupported file format \".svg\". Please upload a PNG, JPG, GIF, or WebP image."}
+1:54:34 PM [express] POST /api/upload 201 in 9ms :: {"id":"ca87fa0f-b14c-4186-9d5a-adc9553c7dc9","filename":"Websitel.png","url":"/uploads/ca87fa0f-b14c-4186-9d5a-adc9553c7dc9.png"}
+1:54:34 PM [express] GET /api/projects/ca87fa0f-b14c-4186-9d5a-adc9553c7dc9 200 in 1ms :: {"id":"ca87fa0f-b14c-4186-9d5a-adc9553c7dc9","filename":"Websitel.png","originalImageUrl":"/uploads/ca87fa0f-b14c-4186-9d5a-adc9553c7dc9.png","html":null,"css":null,"js":null,"description":null,"components":null,"createdAt":"2026-03-14T12:54:34.021Z"}
+Error: Your AI provider account has insufficient credits. Please add credits to your account and try again.
+    at convertDesign (/home/smorenoc/Design-To-Web/server/aiService.ts:132:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async <anonymous> (/home/smorenoc/Design-To-Web/server/routes.ts:146:22)
+1:54:34 PM [express] POST /api/convert 400 in 446ms :: {"message":"Your AI provider account has insufficient credits. Please add credits to your account and try again."}
+1:54:43 PM [express] POST /api/chat 200 in 2ms :: {"message":"Chat AI integration not fully implemented in stub."}
+1:54:47 PM [express] GET /api/projects 200 in 1ms :: [{"id":"ca87fa0f-b14c-4186-9d5a-adc9553c7dc9","filename":"Websitel.png","originalImageUrl":"/uploads/ca87fa0f-b14c-4186-9d5a-adc9553c7dc9.png","html":null,"css":null,"js":null,"description":null,"components":null,"createdAt":"2026-03-14T12:54:34.021Z"}]
+1:54:50 PM [express] DELETE /api/projects/ca87fa0f-b14c-4186-9d5a-adc9553c7dc9 204 in 2ms
+1:54:50 PM [express] GET /api/projects 200 in 1ms :: []
+1:56:40 PM [express] POST /api/upload 201 in 7ms :: {"id":"848cbe88-87a8-4c90-9a5f-8121dd500429","filename":"Websitel.png","url":"/uploads/848cbe88-87a8-4c90-9a5f-8121dd500429.png"}
+1:56:40 PM [express] GET /api/projects/848cbe88-87a8-4c90-9a5f-8121dd500429 200 in 1ms :: {"id":"848cbe88-87a8-4c90-9a5f-8121dd500429","filename":"Websitel.png","originalImageUrl":"/uploads/848cbe88-87a8-4c90-9a5f-8121dd500429.png","html":null,"css":null,"js":null,"description":null,"components":null,"createdAt":"2026-03-14T12:56:40.595Z"}
+Error: Your AI provider account has insufficient credits. Please add credits to your account and try again.
+    at convertDesign (/home/smorenoc/Design-To-Web/server/aiService.ts:132:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async <anonymous> (/home/smorenoc/Design-To-Web/server/routes.ts:146:22)
+1:56:41 PM [express] POST /api/convert 400 in 414ms :: {"message":"Your AI provider account has insufficient credits. Please add credits to your account and try again."}
+1:56:46 PM [express] POST /api/chat 200 in 1ms :: {"message":"Chat AI integration not fully implemented in stub."}
+1:56:50 PM [express] GET /api/projects 200 in 0ms :: [{"id":"848cbe88-87a8-4c90-9a5f-8121dd500429","filename":"Websitel.png","originalImageUrl":"/uploads/848cbe88-87a8-4c90-9a5f-8121dd500429.png","html":null,"css":null,"js":null,"description":null,"components":null,"createdAt":"2026-03-14T12:56:40.595Z"}]
+^C
+smorenoc@penguin:~/Design-To-Web$ 
